@@ -6,13 +6,13 @@ from plumbum.cmd import cp
 from plumbum.cmd import open as open_finder
 from plumbum.cmd import sudo
 
-import hdiutil
+from pybinpack import hdiutil
 
 
 class ExtractedBinpack:
     @staticmethod
     def create_extracted_binpack(binpack_file: Path, extracted_binpack: Path = None, override: bool = False,
-                                 open_in_finder: bool = False, cleanup: bool = True) -> 'ExtractedBinpack':
+                                 cleanup: bool = True) -> 'ExtractedBinpack':
         """
         Extract the input image into temp dir.
         """
@@ -31,14 +31,14 @@ class ExtractedBinpack:
         cp('-a', '-R', mountpoint + os.sep, extracted_binpack)
         hdiutil.detach(mountpoint)
 
-        if open_in_finder:
-            open_finder(extracted_binpack)
-
         return ExtractedBinpack(Path(extracted_binpack), cleanup=cleanup)
 
     def __init__(self, extracted_binpack: Path, cleanup: bool):
         self.extracted_binpack = extracted_binpack
         self._cleanup = cleanup
+
+    def open_in_finder(self) -> None:
+        open_finder(self.extracted_binpack)
 
     def pack(self, out_file: str, override: bool = False, size: str = '20m') -> None:
         """
@@ -60,7 +60,6 @@ class ExtractedBinpack:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        self.pack()
         if self._cleanup:
             self.cleanup()
 
@@ -70,5 +69,5 @@ class ExtractedBinpack:
         """
         sudo('rm', '-rf', self.extracted_binpack)
 
-    def __repr__(self):
-        return f'<{self.__class__.__name__} PATH:{self.extracted_binpack},CLEANUP:{self._cleanup}>'
+    def __repr__(self) -> str:
+        return f'<{self.__class__.__name__} PATH:{self.extracted_binpack} CLEANUP:{self._cleanup}>'

@@ -1,8 +1,13 @@
 import re
 from pathlib import Path
-from typing import Any, Tuple, Union
+from typing import Any, NamedTuple, Union
 
 from plumbum.cmd import hdiutil
+
+
+class AttachResult(NamedTuple):
+    disk: Path
+    mountpoint: Path
 
 
 def imageinfo(image_path: Union[str, Path], **kwargs: Any) -> str:
@@ -10,14 +15,13 @@ def imageinfo(image_path: Union[str, Path], **kwargs: Any) -> str:
     return _run_hdiutil_command('imageinfo', image_path, **kwargs)
 
 
-def attach(image_path: Union[str, Path], **kwargs: Any) -> Tuple:
+def attach(image_path: Union[str, Path], **kwargs: Any) -> AttachResult:
     """ Attach dmg file to mount point"""
     output = _run_hdiutil_command('attach', image_path, **kwargs)
     if not output:
         raise ValueError("No output returned from hdiutil attach")
-    res = re.findall(r'(/[a-zA-Z0-9\./]*\s?)', output)
-    res = tuple(x.replace('\n', '') for x in res)
-    return res
+    res = re.findall(r'(/[a-zA-Z0-9./]*\s?)', output)
+    return AttachResult(*[x.replace('\n', '').strip() for x in res])
 
 
 def detach(image_path: Union[str, Path], **kwargs: Any) -> str:

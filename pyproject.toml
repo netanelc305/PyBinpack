@@ -1,0 +1,49 @@
+[project]
+name = "pybinpack"
+version = "0.0.1"
+description = "Manipulate binpack images"
+readme = "README.md"
+requires-python = ">=3.7"
+license = { file = "LICENSE" }
+keywords = ["ios", "jailbreak", "binpack", "cli", "automation"]
+authors = [
+    { name = "netanelc305", email = "netanelc305@protonmail.com" },
+    { name = "doronz88", email = "doron88@gmail.com" },
+]
+maintainers = [
+    { name = "netanelc305", email = "netanelc305@protonmail.com" },
+    { name = "doronz88", email = "doron88@gmail.com" },
+]
+classifiers = [
+    "Operating System :: MacOS",
+    "Development Status :: 5 - Production/Stable",
+    "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3 :: Only",
+]
+dynamic = ["dependencies"]
+
+[project.optional-dependencies]
+test = ["pytest"]
+
+[project.urls]
+"Homepage" = "https://github.com/netanelc305/pybinpack"
+"Bug Reports" = "https://github.com/netanelc305/pybinpack/issues"
+
+[project.scripts]
+pybinpack = "pybinpack.__main__:cli"
+
+[tool.setuptools.packages.find]
+exclude = ["docs*", "tests*"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[build-system]
+requires = ["setuptools>=43.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
