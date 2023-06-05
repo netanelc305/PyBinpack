@@ -1,4 +1,3 @@
 plumbum
 pathlib
-ipython
 click

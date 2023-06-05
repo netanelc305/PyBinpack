@@ -9,65 +9,64 @@ from plumbum.cmd import sudo
 from pybinpack import hdiutil
 
 
-class ExtractedBinpack:
-    @staticmethod
-    def create_extracted_binpack(binpack_file: Path, extracted_binpack: Path = None, override: bool = False,
-                                 cleanup: bool = True) -> 'ExtractedBinpack':
-        """
-        Extract the input image into temp dir.
-        """
+class BinpackFS:
+    @classmethod
+    def create_from_binpack_dmg(cls, binpack_file: Path) -> 'BinpackFS':
+        """ Create a BinpackFS instance from a given binpack.dmg file """
         _, mountpoint = hdiutil.attach(binpack_file)
         if not mountpoint:
             raise FileNotFoundError(mountpoint)
 
-        if not extracted_binpack:
-            extracted_binpack = TemporaryDirectory().name
-        else:
-            if override:
-                sudo('rm', '-rf', extracted_binpack)
-            else:
-                raise FileExistsError(extracted_binpack)
-
-        cp('-a', '-R', mountpoint + os.sep, extracted_binpack)
+        tmp_fs = Path(TemporaryDirectory().name)
+        cls._copy_and_change_permissions(mountpoint, tmp_fs)
         hdiutil.detach(mountpoint)
 
-        return ExtractedBinpack(Path(extracted_binpack), cleanup=cleanup)
+        return BinpackFS(tmp_fs)
 
-    def __init__(self, extracted_binpack: Path, cleanup: bool):
-        self.extracted_binpack = extracted_binpack
-        self._cleanup = cleanup
+    @classmethod
+    def create_from_fs(cls, fs: Path) -> 'BinpackFS':
+        """ Create a BinpackFS instance from a given FS path """
+        tmp_fs = Path(TemporaryDirectory().name)
+        cls._copy_and_change_permissions(fs, tmp_fs)
+
+        return BinpackFS(tmp_fs)
+
+    def __init__(self, path: Path):
+        self.path = path
 
     def open_in_finder(self) -> None:
-        open_finder(self.extracted_binpack)
+        open_finder(self.path)
 
-    def pack(self, out_file: str, override: bool = False, size: str = '20m') -> None:
+    def pack(self, out_file: Path, override: bool = False, size: str = '20m') -> None:
         """
         Creates new image file from the temp directory.
         """
-        out_file = Path(out_file)
         if override and out_file.exists():
             out_file.unlink()
-        sudo('chown', '-R', '0:0', self.extracted_binpack)
 
         hdiutil.create(out_file,
                        size=size,
                        layout='NONE',
                        format='ULFO',
-                       srcdir=self.extracted_binpack,
+                       srcdir=self.path,
                        fs='HFS+')
 
-    def __enter__(self) -> 'ExtractedBinpack':
+    def __enter__(self) -> 'BinpackFS':
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        if self._cleanup:
-            self.cleanup()
+        self.cleanup()
 
     def cleanup(self) -> None:
         """
         Delete the temp dir and detach the image.
         """
-        sudo('rm', '-rf', self.extracted_binpack)
+        sudo('rm', '-rf', self.path)
 
     def __repr__(self) -> str:
-        return f'<{self.__class__.__name__} PATH:{self.extracted_binpack} CLEANUP:{self._cleanup}>'
+        return f'<{self.__class__.__name__} PATH:{self.path}>'
+
+    @staticmethod
+    def _copy_and_change_permissions(src: Path, dst: Path):
+        cp('-a', '-R', str(src) + os.sep, dst)
+        sudo('chown', '-R', '0:0', dst)
