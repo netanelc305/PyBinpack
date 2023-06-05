@@ -10,7 +10,14 @@ python3 -m pip install -U pybinpack
 
 # Usage
 
+Create from a given filesystem hierarchy:
+
 ```shell
-pybinpack /path/to/binpack.dmg
+pybinpack create /path/to/binpack.dmg /path/to/binpack_root_fs
 ```
 
+Or modify an existing image:
+
+```shell
+pybinpack modify /path/to/binpack.dmg
+```
