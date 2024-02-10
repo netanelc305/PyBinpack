@@ -20,8 +20,7 @@ def attach(image_path: Union[str, Path], **kwargs: Any) -> AttachResult:
     output = _run_hdiutil_command('attach', image_path, **kwargs)
     if not output:
         raise ValueError("No output returned from hdiutil attach")
-    res = re.findall(r'(/[a-zA-Z0-9./]*\s?)', output)
-    return AttachResult(*[x.replace('\n', '').strip() for x in res])
+    return AttachResult(*re.findall(r'\/(?:Volumes\/[^\s]+|dev\/disk\d+)', output))
 
 
 def detach(image_path: Union[str, Path], **kwargs: Any) -> str:
